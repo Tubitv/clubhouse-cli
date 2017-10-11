@@ -1,0 +1,4 @@
+*.py
+.idea/
+dist/
+node_modules/
