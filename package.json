@@ -1,8 +1,19 @@
 {
   "name": "chcli",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A command line utility to make create clubhouse stories easier",
-  "main": "index.js",
+  "main": "dist/src/index.js",
+  "publishConfig": {
+    "registry": "http://npm.adrise.tv"
+  },
+  "preferGlobal": true,
+  "bin": {
+    "chcli": "dist/src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tubitv/clubhouse-cli.git"
+  },
   "dependencies": {
     "chalk": "^2.1.0",
     "clubhouse-lib": "^0.2.0",
@@ -25,8 +36,9 @@
     "typescript": "^2.5.3"
   },
   "scripts": {
+    "prepublishOnly": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "marios@tubi.tv",
   "license": "MIT"
 }

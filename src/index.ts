@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import {Answers, Question} from "inquirer";
 import {IConfiguration, loadConfiguration} from "./configuration";
 import {doInstall} from "./install";

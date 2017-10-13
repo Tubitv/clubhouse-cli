@@ -1,4 +1,5 @@
 *.py
+*.js
 .idea/
 dist/
 node_modules/
