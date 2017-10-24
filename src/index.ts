@@ -3,7 +3,7 @@
 import {Answers, Question} from "inquirer";
 import {IConfiguration, loadConfiguration} from "./configuration";
 import {doInstall} from "./install";
-import {createStory, getState, IClubhouseState, IEpic, IProject, IStory} from "./clubhouse";
+import {createStory, getState, IClubhouseState, IEpic, IProject, IStory, ILabel, ICreateLabel} from "./clubhouse";
 import * as Chalk from "chalk";
 import ChoiceOption = inquirer.objects.ChoiceOption;
 import {isNullOrUndefined} from "util";
@@ -11,6 +11,14 @@ import inquirer = require("inquirer");
 import slug = require("slug");
 
 const link = (msg: string) => Chalk.blue(Chalk.underline(msg));
+
+/**
+ * The ILabelChoice is used to hold the selected label object
+ */
+interface ILabelChoice {
+  name: string;
+  value: ICreateLabel;
+}
 
 function createSingleTicket(state: IClubhouseState) {
   inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -82,17 +90,33 @@ function createSingleTicket(state: IClubhouseState) {
           return Promise.resolve(filtered);
         }
       },
+    },
+    {
+      type: 'list',
+      name: 'labels',
+      message: 'Which label to assign to this story: ',
+      default: state.labels.length,
+      choices: state
+          .labels
+          .map((label: ILabel) => ({
+            name: label.name,
+            value: {
+              name: label.name
+            }
+          } as ILabelChoice))
+          .concat([{name: "No Label", value: null} as ILabelChoice]),
     }] as Question[];
 
   return inquirer
     .prompt(questions)
     .then((res: any) => {
-      return createStory(state.configuration.token, {
+      return cregitateStory(state.configuration.token, {
         name: res.title,
         description: res.description,
         owner_ids: isNullOrUndefined(res.owner) ? null : [res.owner],
         project_id: parseInt(res.project, 10),
         epic_id: res.epic,
+        labels: isNullOrUndefined(res.labels) ? null : [res.labels],
         story_type: res.storyType,
       } as IStory)
         .then((story: IStory) => {

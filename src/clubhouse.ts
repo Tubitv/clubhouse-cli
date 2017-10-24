@@ -126,12 +126,37 @@ export interface IStory {
 }
 
 /**
+ * We use labels to specify sprints for stories
+ */
+export interface ILabel {
+  archived: boolean;
+  color: string;
+  created_at?: Date;
+  entity_type: string;
+  external_id?: string;
+  id?: number;
+  name: string;
+  updated_at?: Date;
+  stats: IStats;
+}
+
+/**
+ * The ICreateLabels is used for attaching labels to stories.
+ */
+export interface ICreateLabel {
+  name: string;
+  color?: string;
+  external_id?: string;
+}
+
+/**
  * Just a root object to hold everything we cache at startup
  */
 export interface IClubhouseState {
   projects?: IProject[];
   epics?: IEpic[];
   users?: IMember[];
+  labels?: ILabel[];
   configuration?: IConfiguration;
   loaded: boolean;
 }
@@ -153,9 +178,14 @@ export function getUsers(token: string): Promise<IMember[]> {
     .then(response => response.body as IMember[]);
 }
 
+export function getLabels(token: string): Promise<ILabel[]> {
+  return got(`${API_BASE_URL}/labels`, {json: true, query: {token}})
+      .then(response => response.body as ILabel[]);
+}
+
 export function createStory(token: string, story: IStory): Promise<IStory> {
   const client = require('clubhouse-lib').create(token);
-  const reqObj: IStory = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id']);
+  const reqObj = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id', 'labels']);
 
   if (!isNullOrUndefined(story.owner_ids)) {
     reqObj.owner_ids = Array.isArray(story.owner_ids) ? story.owner_ids : [story.owner_ids];
@@ -166,11 +196,12 @@ export function createStory(token: string, story: IStory): Promise<IStory> {
 export function getState(cfg: IConfiguration): Promise<IClubhouseState> {
   const token = cfg.token;
   return Promise
-    .all([getProjects(token), getEpics(token), getUsers(token)])
+    .all([getProjects(token), getEpics(token), getUsers(token), getLabels(token)])
     .then(data => ({
       projects: data[0],
       epics: data[1],
       users: data[2],
+      labels: data[3],
       configuration: cfg,
       loaded: true,
     } as IClubhouseState));
