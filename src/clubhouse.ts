@@ -141,7 +141,7 @@ export interface ILabel {
 }
 
 /**
- * The ICreateLabels is used for attaching labels to stories.
+ * The ICreateLabel is used for attaching labels to stories.
  */
 export interface ICreateLabel {
   name: string;
