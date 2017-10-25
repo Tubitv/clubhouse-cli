@@ -4,6 +4,7 @@ import {isNullOrUndefined} from "util";
 import {pick} from "lodash";
 
 const API_BASE_URL = "https://api.clubhouse.io/api/v2";
+const SPRINT_REGEX = new RegExp('sprint ending*', 'i');
 
 export interface IStats {
   num_points_done: number;
@@ -156,7 +157,7 @@ export interface IClubhouseState {
   projects?: IProject[];
   epics?: IEpic[];
   users?: IMember[];
-  labels?: ILabel[];
+  sprints?: ILabel[];
   configuration?: IConfiguration;
   loaded: boolean;
 }
@@ -178,9 +179,22 @@ export function getUsers(token: string): Promise<IMember[]> {
     .then(response => response.body as IMember[]);
 }
 
-export function getLabels(token: string): Promise<ILabel[]> {
+export function getSprints(token: string): Promise<ILabel[]> {
+  // We use labels to indicate sprints in clubhouse.
+  // So get all the labels and filter the ones that match our sprint naming convention.
   return got(`${API_BASE_URL}/labels`, {json: true, query: {token}})
-      .then(response => response.body as ILabel[]);
+      .then(response => {
+        const sprints: ILabel[] = [];
+        if (Array.isArray(response.body)) {
+          response.body.map(label => {
+            if (label.name && label.name.match(SPRINT_REGEX)) {
+              sprints.push(label);
+            }
+          })
+        }
+
+        return sprints;
+      });
 }
 
 export function createStory(token: string, story: IStory): Promise<IStory> {
@@ -196,12 +210,12 @@ export function createStory(token: string, story: IStory): Promise<IStory> {
 export function getState(cfg: IConfiguration): Promise<IClubhouseState> {
   const token = cfg.token;
   return Promise
-    .all([getProjects(token), getEpics(token), getUsers(token), getLabels(token)])
+    .all([getProjects(token), getEpics(token), getUsers(token), getSprints(token)])
     .then(data => ({
       projects: data[0],
       epics: data[1],
       users: data[2],
-      labels: data[3],
+      sprints: data[3],
       configuration: cfg,
       loaded: true,
     } as IClubhouseState));

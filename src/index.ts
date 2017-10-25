@@ -94,10 +94,10 @@ function createSingleTicket(state: IClubhouseState) {
     {
       type: 'list',
       name: 'labels',
-      message: 'Which label to assign to this story: ',
-      default: state.labels.length,
+      message: 'Which sprint to put this story in: ',
+      default: state.sprints.length,
       choices: state
-          .labels
+          .sprints
           .map((label: ILabel) => ({
             name: label.name,
             value: {
