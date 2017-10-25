@@ -110,7 +110,7 @@ function createSingleTicket(state: IClubhouseState) {
   return inquirer
     .prompt(questions)
     .then((res: any) => {
-      return cregitateStory(state.configuration.token, {
+      return createStory(state.configuration.token, {
         name: res.title,
         description: res.description,
         owner_ids: isNullOrUndefined(res.owner) ? null : [res.owner],
