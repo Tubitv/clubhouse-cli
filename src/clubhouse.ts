@@ -4,6 +4,7 @@ import {isNullOrUndefined} from "util";
 import {pick} from "lodash";
 
 const API_BASE_URL = "https://api.clubhouse.io/api/v2";
+const SPRINT_REGEX = new RegExp('sprint ending*', 'i');
 
 export interface IStats {
   num_points_done: number;
@@ -126,12 +127,37 @@ export interface IStory {
 }
 
 /**
+ * We use labels to specify sprints for stories
+ */
+export interface ILabel {
+  archived: boolean;
+  color: string;
+  created_at?: Date;
+  entity_type: string;
+  external_id?: string;
+  id?: number;
+  name: string;
+  updated_at?: Date;
+  stats: IStats;
+}
+
+/**
+ * The ICreateLabel is used for attaching labels to stories.
+ */
+export interface ICreateLabel {
+  name: string;
+  color?: string;
+  external_id?: string;
+}
+
+/**
  * Just a root object to hold everything we cache at startup
  */
 export interface IClubhouseState {
   projects?: IProject[];
   epics?: IEpic[];
   users?: IMember[];
+  sprints?: ILabel[];
   configuration?: IConfiguration;
   loaded: boolean;
 }
@@ -153,9 +179,27 @@ export function getUsers(token: string): Promise<IMember[]> {
     .then(response => response.body as IMember[]);
 }
 
+export function getSprints(token: string): Promise<ILabel[]> {
+  // We use labels to indicate sprints in clubhouse.
+  // So get all the labels and filter the ones that match our sprint naming convention.
+  return got(`${API_BASE_URL}/labels`, {json: true, query: {token}})
+      .then(response => {
+        const sprints: ILabel[] = [];
+        if (Array.isArray(response.body)) {
+          response.body.map(label => {
+            if (label.name && label.name.match(SPRINT_REGEX)) {
+              sprints.push(label);
+            }
+          })
+        }
+
+        return sprints;
+      });
+}
+
 export function createStory(token: string, story: IStory): Promise<IStory> {
   const client = require('clubhouse-lib').create(token);
-  const reqObj: IStory = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id']);
+  const reqObj = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id', 'labels']);
 
   if (!isNullOrUndefined(story.owner_ids)) {
     reqObj.owner_ids = Array.isArray(story.owner_ids) ? story.owner_ids : [story.owner_ids];
@@ -166,11 +210,12 @@ export function createStory(token: string, story: IStory): Promise<IStory> {
 export function getState(cfg: IConfiguration): Promise<IClubhouseState> {
   const token = cfg.token;
   return Promise
-    .all([getProjects(token), getEpics(token), getUsers(token)])
+    .all([getProjects(token), getEpics(token), getUsers(token), getSprints(token)])
     .then(data => ({
       projects: data[0],
       epics: data[1],
       users: data[2],
+      sprints: data[3],
       configuration: cfg,
       loaded: true,
     } as IClubhouseState));
