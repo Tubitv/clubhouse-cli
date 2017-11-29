@@ -3,12 +3,13 @@
 import {Answers, Question} from "inquirer";
 import {IConfiguration, loadConfiguration} from "./configuration";
 import {doInstall} from "./install";
-import {createStory, getState, IClubhouseState, IEpic, IProject, IStory, ILabel, ICreateLabel} from "./clubhouse";
+import {createStory, getState, IClubhouseState, IEpic, IProject, ITeam, IStory, ILabel, ICreateLabel} from "./clubhouse";
 import * as Chalk from "chalk";
 import ChoiceOption = inquirer.objects.ChoiceOption;
 import {isNullOrUndefined} from "util";
 import inquirer = require("inquirer");
 import slug = require("slug");
+import {writeSync} from "clipboardy";
 
 const link = (msg: string) => Chalk.blue(Chalk.underline(msg));
 
@@ -29,7 +30,13 @@ function createSingleTicket(state: IClubhouseState) {
       message: 'Which project does this story belong to: ',
       choices: state
         .projects
-        .map((project: IProject) => ({name: project.name, value: project.id.toString()} as ChoiceOption)),
+        .sort((p1: IProject, p2: IProject) => p1.team_id - p2.team_id)
+        .map((project: IProject) => {
+          return {
+            name: `${project.name} (${state.teams.find((team: ITeam) => team.id === project.team_id).name})`,
+            value: project.id.toString(),
+          } as ChoiceOption;
+        }),
       default: state.projects.findIndex(project => project.id == state.configuration.defaultProjectId),
       validate: (input: string, answers?: Answers) => {
         if (isNullOrUndefined(input)) return "A story must be assigned to a project";
@@ -122,10 +129,11 @@ function createSingleTicket(state: IClubhouseState) {
         .then((story: IStory) => {
           const id = story.id;
           const storySlug = slug(story.name).toLowerCase();
+          const gitCmd = `git checkout -b ${story.story_type}/ch${id}/${storySlug}`;
           console.info(Chalk.green(`Successfully created a story with id ${id}`));
           console.info("You can view your story at " + link(`https://app.clubhouse.io/tubi/story/${id}`));
-          console.info("To start working on this story " +
-            Chalk.bold(`git checkout -b ${story.story_type}/ch${id}/${storySlug}`));
+          console.info("To start working on this story (copied to clipboard): " + Chalk.bold(gitCmd));
+          writeSync(gitCmd);
           return story;
         })
         .catch((err: any) => {
