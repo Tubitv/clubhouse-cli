@@ -178,24 +178,6 @@ export interface ITeam {
   project_ids: number[];
 }
 
-// export class ProjectChoiceOption implements ChoiceOption {
-//   public name?: string;
-//   public value?: string;
-//   public type?: string;
-//   public extra?: any;
-//   public key?: string;
-//   public checked?: boolean;
-//   public disabled?: string | ((answers: inquirer.Answers) => any);
-//
-//   constructor(project: IProject, teams?: ITeam[]) {
-//     this.name = `${project.name}`;
-//     if (teams) {
-//       this.name += `(${teams.find((team: ITeam) => team.id === project.team_id).name})`;
-//     }
-//     this.value = project.id.toString();
-//   }
-// }
-
 /**
  * Convenience function to create Choice objects that inquirer uses when displaying lists or checkboxes
  */
