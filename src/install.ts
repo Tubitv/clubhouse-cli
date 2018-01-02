@@ -1,22 +1,10 @@
 import inquirer = require("inquirer");
-import {Answers, ChoiceType, Question} from "inquirer";
+import {Answers, Question} from "inquirer";
 import {isNullOrUndefined} from "util";
 import {IConfiguration, saveConfiguration} from "./configuration";
-import {getProjects, IClubhouseState, IProject} from "./clubhouse";
-import ChoiceOption = inquirer.objects.ChoiceOption;
+import {getState, IClubhouseState, makeProjectChoices} from "./clubhouse";
 import * as Chalk from "chalk";
 import {sys} from "typescript";
-
-
-function makeProjectChoices(projects: IProject[]): ChoiceOption[] {
-  return projects
-    .map(project => (
-      {
-        name: project.name,
-        value: project.id.toString(),
-        short: `\n${project.description}\n`,
-      } as ChoiceOption));
-}
 
 export function doInstall(currentCfg: IConfiguration, chCfg: IClubhouseState): Promise<IConfiguration> {
   const questions: Question[] = [
@@ -35,16 +23,16 @@ export function doInstall(currentCfg: IConfiguration, chCfg: IClubhouseState): P
       name: "defaultProject",
       message: "Do you want to set a project as a default? ",
       choices: (answers: Answers) => {
-        return getProjects(answers.token)
-          .then(projects => makeProjectChoices(projects)
+        return getState({token: answers.token} as IConfiguration)
+          .then(state => makeProjectChoices(state.projects, state.teams)
             .concat([{name: "No Default", value: "-1"}]))
           .catch(ex => {
-            console.error(Chalk.red("Unable to get list of projects. Are you sure the API key is correct?"));
+            console.error(Chalk.red("Unable to get list of projects and teams. Are you sure the API key is correct?"));
             console.error(Chalk.bold("Error is: ") + ex.message);
             sys.exit(-1);
           });
       },
-      default: currentCfg.defaultProjectId,
+      default: currentCfg.defaultProjectId || "-1",
     },
   ] as Question[];
 

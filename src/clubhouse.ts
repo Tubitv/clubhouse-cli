@@ -2,6 +2,8 @@ import got = require("got");
 import {IConfiguration} from "./configuration";
 import {isNullOrUndefined} from "util";
 import {pick} from "lodash";
+import * as inquirer from "inquirer";
+import ChoiceOption = inquirer.objects.ChoiceOption;
 
 const API_BASE_URL = "https://api.clubhouse.io/api/v2";
 const SPRINT_REGEX = new RegExp('sprint ending*', 'i');
@@ -176,6 +178,38 @@ export interface ITeam {
   project_ids: number[];
 }
 
+// export class ProjectChoiceOption implements ChoiceOption {
+//   public name?: string;
+//   public value?: string;
+//   public type?: string;
+//   public extra?: any;
+//   public key?: string;
+//   public checked?: boolean;
+//   public disabled?: string | ((answers: inquirer.Answers) => any);
+//
+//   constructor(project: IProject, teams?: ITeam[]) {
+//     this.name = `${project.name}`;
+//     if (teams) {
+//       this.name += `(${teams.find((team: ITeam) => team.id === project.team_id).name})`;
+//     }
+//     this.value = project.id.toString();
+//   }
+// }
+
+/**
+ * Convenience function to create Choice objects that inquirer uses when displaying lists or checkboxes
+ */
+export function makeProjectChoices(projects: IProject[], teams: ITeam[]): ChoiceOption[] {
+  return projects
+    .sort((p1: IProject, p2: IProject) => p1.team_id - p2.team_id)
+    .map(project => (
+      {
+        name: `${project.name} (${teams.find((team: ITeam) => team.id === project.team_id).name})`,
+        value: project.id.toString(),
+        short: project.name,
+      } as ChoiceOption));
+}
+
 export function getProjects(token: string): Promise<IProject[]> {
   return got(`${API_BASE_URL}/projects`, {json: true, query: {token}})
     .then(response => response.body as IProject[])
@@ -185,7 +219,7 @@ export function getProjects(token: string): Promise<IProject[]> {
 export function getEpics(token: string): Promise<IEpic[]> {
   return got(`${API_BASE_URL}/epics`, {json: true, query: {token}})
     .then(response => response.body as IEpic[])
-    .then(epics => epics.filter(epic => !epic.archived));
+    .then(epics => epics.filter(epic => !epic.archived && !epic.completed));
 }
 
 export function getUsers(token: string): Promise<IMember[]> {
@@ -218,7 +252,7 @@ export function getSprints(token: string): Promise<ILabel[]> {
 
 export function createStory(token: string, story: IStory): Promise<IStory> {
   const client = require('clubhouse-lib').create(token);
-  const reqObj = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id', 'labels']);
+  const reqObj: IStory = pick(story, ['name', 'description', 'story_type', 'epic_id', 'project_id', 'labels']);
 
   if (!isNullOrUndefined(story.owner_ids)) {
     reqObj.owner_ids = Array.isArray(story.owner_ids) ? story.owner_ids : [story.owner_ids];

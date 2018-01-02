@@ -3,7 +3,7 @@
 import {Answers, Question} from "inquirer";
 import {IConfiguration, loadConfiguration} from "./configuration";
 import {doInstall} from "./install";
-import {createStory, getState, IClubhouseState, IEpic, IProject, ITeam, IStory, ILabel, ICreateLabel} from "./clubhouse";
+import {createStory, getState, IClubhouseState, IEpic, IStory, ILabel, ICreateLabel, makeProjectChoices} from "./clubhouse";
 import * as Chalk from "chalk";
 import ChoiceOption = inquirer.objects.ChoiceOption;
 import {isNullOrUndefined} from "util";
@@ -28,15 +28,7 @@ function createSingleTicket(state: IClubhouseState) {
       type: 'list',
       name: 'project',
       message: 'Which project does this story belong to: ',
-      choices: state
-        .projects
-        .sort((p1: IProject, p2: IProject) => p1.team_id - p2.team_id)
-        .map((project: IProject) => {
-          return {
-            name: `${project.name} (${state.teams.find((team: ITeam) => team.id === project.team_id).name})`,
-            value: project.id.toString(),
-          } as ChoiceOption;
-        }),
+      choices: makeProjectChoices(state.projects, state.teams),
       default: state.projects.findIndex(project => project.id == state.configuration.defaultProjectId),
       validate: (input: string, answers?: Answers) => {
         if (isNullOrUndefined(input)) return "A story must be assigned to a project";

@@ -1,6 +1,6 @@
 {
   "name": "chcli",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A command line utility to make create clubhouse stories easier",
   "main": "dist/src/index.js",
   "publishConfig": {
@@ -15,7 +15,6 @@
     "url": "git+https://github.com/Tubitv/clubhouse-cli.git"
   },
   "dependencies": {
-    "@types/clipboardy": "^1.1.0",
     "chalk": "^2.1.0",
     "clipboardy": "^1.2.2",
     "clubhouse-lib": "^0.2.0",
@@ -27,6 +26,7 @@
     "slug": "^0.9.1"
   },
   "devDependencies": {
+    "@types/clipboardy": "^1.1.0",
     "@types/chalk": "^0.4.31",
     "@types/got": "^7.1.4",
     "@types/inquirer": "0.0.35",
